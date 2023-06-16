@@ -138,10 +138,13 @@ export function init_diagram(diagram)
     {
         const width = widthsMap.get(initialState)
         const height = get_required_viewport_height(width, aspectRatio)
+        const scaledWidth  = scaleFactor * width
+        const scaledHeight = scaleFactor * height
 
+        diagram.setAttribute("width",  scaledWidth)
+        diagram.setAttribute("height", scaledHeight)
         medium.attr("preserveAspectRatio", "xMidYMid meet")
-        medium.size(scaleFactor * width,
-                    scaleFactor * height)
+        medium.size(scaledWidth, scaledHeight)
         medium.viewbox(0, 0, width, height)
     }
 
