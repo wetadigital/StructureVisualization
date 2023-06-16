@@ -1,0 +1,116 @@
+/*
+  SPDX-License-Identifier: Apache-2.0
+  Copyright (c) Contributors to the StructureVisualization Project.
+*/
+
+body {
+    background: #f6f6f6;
+    background-size: cover;
+    background-repeat: no-repeat;
+    display: compact;
+}
+
+.footer {
+    position: fixed;
+    left: 0px;
+    bottom: 0px;
+    width: 100%;
+    padding: 0px 16px;
+    background: #555;
+    color: #f1f1f1;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+li {
+    float: left;
+    font-family: Helvetica, sans-serif;
+}
+
+li span.footer-delimiter {
+    display: inline-block;
+    text-align: center;
+    font-weight: bold;
+    color: grey;
+    padding: 16px 16px;
+    font-size: 20px;
+}
+
+li button {
+    display: inline-block;
+    text-align: center;
+    padding: 16px 16px;
+    text-decoration: none;
+    font-weight: bold;
+    color: white;
+    border: none;
+    background: none;
+    font-size: 14px;
+}
+
+li button:hover {
+    background-color: #2980B9;
+}
+
+#info-para {
+    padding: 0px 16px;
+    color: #f1f1f1;
+}
+
+#page-info {
+    padding: 0px 16px;
+    color: #f1f1f1;
+}
+
+.dropup {
+    display: inline-block;
+}
+
+.dropup-button {
+    border: none;
+}
+
+.dropup-content {
+    display: none;
+    position: absolute;
+    bottom: 50px;
+    background: #555;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.dropup-content a.current {
+    background-color: #298088;
+}
+
+.dropup-content p {
+    padding: 0px 16px;
+    color: #BBB;
+    text-decoration: underline;
+}
+
+.dropup-content a {
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-decoration: none;
+    color: white;
+}
+
+.dropup-content a:hover {
+    background-color: #2980B9;
+}
+
+.dropup:hover .dropup-content {
+    display: block;
+}
+
+.dropup:hover .dropup-button {
+    background-color: #2980B9;
+}

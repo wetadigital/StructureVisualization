@@ -1,0 +1,163 @@
+{
+  "aspect-ratio": [
+    3,
+    4
+  ],
+  "scale-factor": 3,
+  "unit-size": 8,
+  "state-order": [
+    "collapsed",
+    "plan_view",
+    "isometric"
+  ],
+  "layer-content-classes": [
+    "content",
+    "container",
+    "root-container",
+    "container-bg",
+    "visibility",
+    "collapsed-only",
+    "plan-view-only",
+    "isometric-only",
+    "expanded-modes"
+  ],
+  "visibility": {
+    "eye": {
+      "true": {
+        "content": true,
+        "container": true,
+        "root-container": true,
+        "container-bg": true,
+        "visibility": true,
+        "collapsed-only": true,
+        "plan-view-only": true,
+        "isometric-only": true,
+        "expanded-modes": true
+      },
+      "false": {
+        "content": false,
+        "container": false,
+        "container-bg": false,
+        "root-container": false,
+        "visibility": false,
+        "collapsed-only": false,
+        "plan-view-only": false,
+        "isometric-only": false,
+        "expanded-modes": false
+      }
+    },
+    "view": {
+      "collapsed": {
+        "content": true,
+        "container": false,
+        "root-container": true,
+        "container-bg": false,
+        "visibility": false,
+        "collapsed-only": true,
+        "plan-view-only": false,
+        "isometric-only": false,
+        "expanded-modes": false
+      },
+      "plan_view": {
+        "content": true,
+        "container": true,
+        "root-container": true,
+        "container-bg": true,
+        "visibility": true,
+        "collapsed-only": false,
+        "plan-view-only": true,
+        "isometric-only": false,
+        "expanded-modes": true
+      },
+      "isometric": {
+        "content": true,
+        "container": true,
+        "root-container": true,
+        "container-bg": true,
+        "visibility": true,
+        "collapsed-only": false,
+        "plan-view-only": false,
+        "isometric-only": true,
+        "expanded-modes": true
+      }
+    }
+  },
+  "visibility-range": {
+    "eye": {
+      "content": [
+        false,
+        true
+      ],
+      "container": [
+        0.0,
+        0.75
+      ],
+      "root-container": [
+        0.0,
+        0.75
+      ],
+      "container-bg": [
+        0.4,
+        0.75
+      ],
+      "visibility": [
+        0.4,
+        1.0
+      ],
+      "collapsed-only": [
+        false,
+        true
+      ],
+      "plan-view-only": [
+        false,
+        true
+      ],
+      "isometric-only": [
+        false,
+        true
+      ],
+      "expanded-modes": [
+        false,
+        true
+      ]
+    },
+    "view": {
+      "content": [
+        false,
+        true
+      ],
+      "container": [
+        0.0,
+        0.75
+      ],
+      "root-container": [
+        0.0,
+        0.75
+      ],
+      "container-bg": [
+        0.0,
+        0.75
+      ],
+      "visibility": [
+        0.0,
+        1.0
+      ],
+      "collapsed-only": [
+        0.0,
+        0.5
+      ],
+      "plan-view-only": [
+        0.0,
+        0.5
+      ],
+      "isometric-only": [
+        0.0,
+        0.5
+      ],
+      "expanded-modes": [
+        0.0,
+        0.5
+      ]
+    }
+  }
+}

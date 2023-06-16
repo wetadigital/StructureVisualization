@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright (c) Contributors to the StructureVisualization Project. -->
+
+<html lang="en">
+  <head>
+    <!-- Info -->
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+    <meta name="description"
+          content="Structure Visualization">
+    <title>Structure Visualization</title>
+    <!-- Icon -->
+    <link rel="icon"
+          href="favicon.ico" />
+    <!-- Style -->
+    <link rel="stylesheet"
+          href="/css/base.css?v=1.0"
+          type="text/css" />
+    <!-- Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/3.1.2/svg.min.js"></script>
+    <script type="module">
+      import { populate_page } from './src/setup.js?v=1.0'
+      // DOMContentLoaded fires post loading of modules.
+      if (document.readyState === 'loading')
+      {
+          window.addEventListener("DOMContentLoaded", populate_page);
+      }
+      else
+      {
+          populate_page()
+      }
+    </script>
+  </head>
+  <body>
+    <div>
+      <!-- Access to external file contents requires serving the page. -->
+      <object id="diagram"
+              type="image/svg+xml"
+              onload="import('./src/diagram.js')
+                      .then((m) => m.init_diagram(this))">
+      </object>
+    </div>
+    <div class="footer">
+      <p id="info-para">Structure Visualization.</p>
+      <ul>
+        <li><span class="footer-delimiter">/</span></li>
+        <li class="dropup">
+          <button id="button-cat" class="dropup-button">
+            <span style="color: #AAA">Select Category</span></button>
+          <div id="cat-list" class="dropup-content" >
+            <p>Categories</p>
+          </div>
+        </li>
+        <li><span class="footer-delimiter">/</span></li>
+        <li class="dropup">
+          <button id="button-page" class="dropup-button">
+            <span style="color: #AAA">Select Page</span></button>
+          <div id="page-list" class="dropup-content">
+            <p>Pages</p>
+          </div>
+        </li>
+        <li><span class="footer-delimiter">/</span></li>
+        <li><button id="button-state"
+                    style="display:none"
+                    data-state="collapsed"
+                    tabindex="-1">Toggle View</button></li>
+        <li><p id="page-info"></p></li>
+      </ul>
+    </div>
+  </body>
+</html>

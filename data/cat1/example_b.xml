@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright (c) Contributors to the StructureVisualization Project. -->
+
+<?xml-stylesheet type="text/xsl" href="/res/gen_svg-0.1.xsl"?>
+<sv:sv xmlns:sv="urn:example:sv" xmlns="http://www.w3.org/2000/svg">
+
+  <sv:defs>
+    <sv:deftag id="asset-info" value="ASSET INFO" width="29" color="#333333" />
+    <sv:deftag id="custom-data" value="CUSTOM DATA" width="35" color="#333333" />
+    <sv:deftag id="assembly" value="ASSEMBLY" width="26" color="#008080" />
+    <sv:deftag id="component" value="COMPONENT" width="32" color="#008080" />
+  </sv:defs>
+
+  <sv:namedview />
+
+  <sv:stacks>
+
+    <sv:stack id="main">
+      <sv:layer idSuffix="root" path="main.usd">
+        <sv:prim isa="xform" name="main" barDraw="1" default="1" height="4" theight="8">
+          <sv:taglist>
+            <sv:tag name="asset-info" />
+            <sv:tag name="custom-data" />
+          </sv:taglist>
+          <sv:taglist>
+            <sv:tag name="assembly" />
+          </sv:taglist>
+        </sv:prim>
+        <sv:prim isa="scope" name="proxy" height="4" indent="1">
+          <sv:taglist>
+            <sv:tag name="component" />
+          </sv:taglist>
+        </sv:prim>
+        <sv:prim isa="scope" name="render" height="4" indent="1">
+          <sv:taglist>
+            <sv:tag name="component" />
+          </sv:taglist>
+        </sv:prim>
+      </sv:layer>
+    </sv:stack>
+  </sv:stacks>
+</sv:sv>

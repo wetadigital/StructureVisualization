@@ -1,0 +1,38 @@
+{
+    "cat1" : {
+        "name" : "cat1",
+        "text" : "Category One",
+        "pages" : {
+            "a" : {
+                "name": "example_a.xml",
+                "text": "First (xml)",
+                "user": "Username",
+                "date": 1686559817043,
+                "info": "Test data.",
+                "more": "a detail page link"
+            },
+            "b" : {
+                "name": "example_b.xml",
+                "text": "Second (xml)",
+                "user": "Username",
+                "date": 1686560141905,
+                "info": "Test data.",
+                "more": "a detail page link"
+            }
+        }
+    },
+    "cat2" : {
+        "name" : "cat2",
+        "text" : "Category Two",
+        "pages" : {
+            "a" : {
+                "name": "example_a.xml",
+                "text": "First (xml)",
+                "user": "Username",
+                "date": 1686559817043,
+                "info": "Test data.",
+                "more": "a detail page link"
+            }
+        }
+    }
+}
