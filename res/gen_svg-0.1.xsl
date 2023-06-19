@@ -3,14 +3,12 @@
 <!-- Copyright (c) Contributors to the StructureVisualization Project. -->
 
 <xsl:stylesheet version="1.0"
-		        xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-		        xmlns="http://www.w3.org/2000/svg"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns="http://www.w3.org/2000/svg"
                 xmlns:sv="urn:example:sv"
                 xmlns:svg="http://www.w3.org/2000/svg"
                 xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
                 xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd">
-
-  <!-- <xsl:strip-space elements="*" /> -->
 
   <!-- doctype-public="-//W3C//DTD SVG 1.1//EN" -->
   <xsl:output method="xml"
@@ -27,7 +25,12 @@
   <xsl:variable name="layerContentX" select="$unitsize * 1.5" />
   <xsl:variable name="layerContentY" select="$unitsize * 3.5" />
 
-
+  <!-- All template application is explicit. -->
+  <xsl:template match="node()" />
+  <xsl:template match="node()" mode="autodefs" />
+  <xsl:template match="node()" mode="right_aligned" />
+  <xsl:template match="node()" mode="required_width" />
+  <xsl:template match="node()" mode="contents_width" />
 
   <!-- ROOT ENTITIES -->
   <!-- ############# -->
@@ -58,10 +61,7 @@
   <xsl:template match="sv:stacks">
     <g id="stacks"
        inkscape:groupmode="layer">
-      <xsl:text>&#xa;</xsl:text>
-      <xsl:for-each select=".">
-        <xsl:apply-templates />
-      </xsl:for-each>
+      <xsl:apply-templates />
     </g>
   </xsl:template>
 
@@ -72,55 +72,57 @@
   <!-- CONTENT WIDTH CALCULATIONS -->
   <!-- ########################## -->
 
-  <xsl:template name="collect_taglist_width">
-    <xsl:param name="index" select="count(../sv:tag)" />
-    <xsl:param name="current" select="0" />
-    <xsl:variable name="tagid" select="../sv:tag[$index]/@name" />
-    <xsl:variable name="w" select="/sv:sv/sv:defs/sv:deftag[@id=$tagid]/@width" />
+  <xsl:key name="find_tag" match="/sv:sv/sv:defs/sv:deftag" use="@id"/>
+
+  <xsl:template name="get_max">
+    <xsl:param name="a" />
+    <xsl:param name="b" />
     <xsl:choose>
-      <xsl:when test="$index">
-        <xsl:call-template name="collect_taglist_width">
-          <xsl:with-param name="index" select="$index - 1" />
-          <xsl:with-param name="current" select="$current + $w + 2" />
-        </xsl:call-template>
+      <xsl:when test="$a &gt; $b">
+        <xsl:value-of select="$a" />
       </xsl:when>
       <xsl:otherwise>
-        <xsl:value-of select="$current" />
+        <xsl:value-of select="$b" />
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template name="get_max_taglist_width">
-    <xsl:param name="index" select="count(../sv:taglist)" />
-    <xsl:param name="current_max" select="0" />
-    <xsl:variable name="w">
-      <xsl:choose>
-        <xsl:when test="count(../sv:taglist[$index]/sv:tag)">
-          <xsl:for-each select="../sv:taglist[$index]/sv:tag[last()]">
-            <xsl:call-template name="collect_taglist_width" />
-          </xsl:for-each>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="0" />
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
+  <xsl:template match="sv:taglist" mode="required_width">
+    <xsl:param name="index" select="count(sv:tag)" />
+    <xsl:param name="current_sum" select="0" />
+    <xsl:variable name="tagid" select="sv:tag[$index]/@name" />
     <xsl:choose>
       <xsl:when test="$index">
-        <xsl:variable name="new_max">
-          <xsl:choose>
-            <xsl:when test="$current_max &lt; $w">
-              <xsl:value-of select="$w" />
-            </xsl:when>
-            <xsl:otherwise>
-              <xsl:value-of select="$current_max" />
-            </xsl:otherwise>
-          </xsl:choose>
-        </xsl:variable>
-        <xsl:call-template name="get_max_taglist_width">
-          <xsl:with-param name="current_max" select="$new_max" />
+        <xsl:apply-templates select="." mode="required_width">
           <xsl:with-param name="index" select="$index - 1" />
-        </xsl:call-template>
+          <xsl:with-param
+              name="current_sum"
+              select="$current_sum + key('find_tag', $tagid)/@width + 2" />
+        </xsl:apply-templates>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$current_sum" />
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="sv:prim" mode="contents_width">
+    <xsl:param name="index" select="count(sv:taglist)" />
+    <xsl:param name="current_max" select="0" />
+    <xsl:choose>
+      <xsl:when test="$index">
+        <xsl:variable name="w">
+          <xsl:apply-templates select="sv:taglist[$index]" mode="required_width" />
+        </xsl:variable>
+        <xsl:apply-templates select="." mode="contents_width">
+          <xsl:with-param name="current_max">
+            <xsl:call-template name="get_max">
+              <xsl:with-param name="a" select="$current_max" />
+              <xsl:with-param name="b" select="$w" />
+            </xsl:call-template>
+          </xsl:with-param>
+          <xsl:with-param name="index" select="$index - 1" />
+        </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>
         <xsl:value-of select="$current_max" />
@@ -128,49 +130,36 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template name="get_max_prim_width">
-    <xsl:param name="current_max" select="0" />
-    <xsl:param name="index" select="0" />
-    <xsl:variable name="prim_w" select="string-length(child::sv:prim[$index]/@name)*$primfontW" />
+  <xsl:template match="sv:prim" mode="required_width">
+    <xsl:variable name="prim_w" select="string-length(@name)*$primfontW" />
     <xsl:variable name="tag_w">
-      <xsl:choose>
-        <xsl:when test="count(sv:prim[$index]/sv:taglist)">
-          <xsl:for-each select="sv:prim[$index]/sv:taglist[last()]">
-            <xsl:call-template name="get_max_taglist_width" />
-          </xsl:for-each>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="0" />
-        </xsl:otherwise>
-      </xsl:choose>
+      <xsl:apply-templates select="." mode="contents_width" />
     </xsl:variable>
     <xsl:variable name="max_row">
-      <xsl:choose>
-        <xsl:when test="$prim_w &gt; $tag_w">
-          <xsl:value-of select="$prim_w" />
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="$tag_w" />
-        </xsl:otherwise>
-      </xsl:choose>
+      <xsl:call-template name="get_max">
+        <xsl:with-param name="a" select="$prim_w" />
+        <xsl:with-param name="b" select="$tag_w" />
+      </xsl:call-template>
     </xsl:variable>
-    <xsl:variable name="w" select="$max_row + sum(child::sv:prim[$index]/@indent)*16" />
+    <xsl:value-of select="$max_row + sum(@indent)*$unitsize*2" />
+  </xsl:template>
+
+  <xsl:template match="sv:layer" mode="contents_width">
+    <xsl:param name="index" select="count(sv:prim)" />
+    <xsl:param name="current_max" select="0" />
     <xsl:choose>
       <xsl:when test="$index">
-        <xsl:variable name="new_max">
-          <xsl:choose>
-            <xsl:when test="$current_max &lt; $w">
-              <xsl:value-of select="$w" />
-            </xsl:when>
-            <xsl:otherwise>
-              <xsl:value-of select="$current_max" />
-            </xsl:otherwise>
-          </xsl:choose>
-        </xsl:variable>
-        <xsl:call-template name="get_max_prim_width">
-          <xsl:with-param name="current_max" select="$new_max" />
+        <xsl:apply-templates select="." mode="contents_width">
           <xsl:with-param name="index" select="$index - 1" />
-        </xsl:call-template>
+          <xsl:with-param name="current_max">
+            <xsl:call-template name="get_max">
+              <xsl:with-param name="a" select="$current_max" />
+              <xsl:with-param name="b">
+                <xsl:apply-templates select="sv:prim[$index]" mode="required_width" />
+              </xsl:with-param>
+            </xsl:call-template>
+          </xsl:with-param>
+        </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>
         <xsl:value-of select="$current_max" />
@@ -178,52 +167,37 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template name="get_required_layer_width">
+  <xsl:template match="sv:layer" mode="required_width">
     <xsl:variable name="visButtonOffset" select="$unitsize" />
-    <xsl:variable name="layer_path_width"
+    <xsl:variable name="width_required_for_layer_path"
                   select="string-length(@path)*$primfontW + $visButtonOffset" />
-    <xsl:variable name="required_prim_width">
-      <xsl:call-template name="get_max_prim_width">
-        <xsl:with-param name="index" select="count(child::sv:prim)" />
-      </xsl:call-template>
-    </xsl:variable>
     <xsl:variable name="required_layer_width">
-      <xsl:choose>
-        <xsl:when test="$layer_path_width &gt; $required_prim_width">
-          <xsl:value-of select="$layer_path_width" />
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="$required_prim_width" />
-        </xsl:otherwise>
-      </xsl:choose>
+      <xsl:call-template name="get_max">
+        <xsl:with-param name="a" select="$width_required_for_layer_path" />
+        <xsl:with-param name="b">
+          <xsl:apply-templates select="." mode="contents_width" />
+        </xsl:with-param>
+      </xsl:call-template>
     </xsl:variable>
     <xsl:value-of select="18.5*2 + $required_layer_width" />
   </xsl:template>
 
-  <xsl:template name="get_max_layer_width">
-    <xsl:param name="index" select="count(child::sv:layer)" />
+  <xsl:template match="sv:stack" mode="required_width">
+    <xsl:param name="index" select="count(sv:layer)" />
     <xsl:param name="current_max" select="0" />
-    <xsl:variable name="w">
-      <xsl:for-each select="sv:layer[$index]">
-        <xsl:call-template name="get_required_layer_width" />
-      </xsl:for-each>
-    </xsl:variable>
     <xsl:choose>
       <xsl:when test="$index">
-        <xsl:variable name="new_max">
-          <xsl:choose>
-            <xsl:when test="$current_max &lt; $w">
-              <xsl:value-of select="$w" />
-            </xsl:when>
-            <xsl:otherwise>
-              <xsl:value-of select="$current_max" />
-            </xsl:otherwise>
-          </xsl:choose>
-        </xsl:variable>
-        <xsl:call-template name="get_max_layer_width">
+        <xsl:apply-templates select="." mode="required_width">
           <xsl:with-param name="index" select="$index - 1" />
-          <xsl:with-param name="current_max" select="$new_max" />
-        </xsl:call-template>
+          <xsl:with-param name="current_max">
+            <xsl:call-template name="get_max">
+              <xsl:with-param name="a" select="$current_max" />
+              <xsl:with-param name="b">
+                <xsl:apply-templates select="sv:layer[$index]" mode="required_width" />
+              </xsl:with-param>
+            </xsl:call-template>
+          </xsl:with-param>
+        </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>
         <xsl:value-of select="$current_max" />
@@ -247,24 +221,22 @@
   </xsl:template>
 
   <xsl:template match="sv:stack">
-    <xsl:variable name="w">
-      <xsl:call-template name="get_max_layer_width" />
+    <xsl:variable name="width">
+      <xsl:apply-templates select="." mode="required_width" />
     </xsl:variable>
     <g id="{concat('stack_', @id)}"
        data-gridY="{sum(@gridY)}"
        data-gridX="{sum(@gridX)}"
-       data-width="{$w}">
+       data-width="{$width}">
       <xsl:if test="@parent">
         <xsl:attribute name="data-parent">
           <xsl:value-of select="concat('stack_', @parent)" />
         </xsl:attribute>
       </xsl:if>
       <xsl:attribute name="inkscape:groupmode">layer</xsl:attribute>
-      <xsl:for-each select="*">
-        <xsl:call-template name="process_layer">
-          <xsl:with-param name="w" select="$w" />
-        </xsl:call-template>
-      </xsl:for-each>
+      <xsl:apply-templates>
+        <xsl:with-param name="w" select="$width" />
+      </xsl:apply-templates>
     </g>
   </xsl:template>
 
@@ -276,7 +248,6 @@
   <!-- ######### -->
 
   <xsl:template name="add_bg_rect">
-    <!-- <xsl:text>&#xa;</xsl:text> -->
     <!-- <rect -->
     <!--     class="bg-rect" -->
     <!--     width="200" -->
@@ -309,7 +280,6 @@
     <xsl:param name="h" />
     <xsl:param name="t" />
     <xsl:call-template name="add_bg_rect" />
-    <xsl:text>&#xa;</xsl:text>
     <g opacity="0.75"
        inkscape:label="container_bg"
        class="container-bg"
@@ -318,7 +288,6 @@
             width="{$w}" height="{$h}" x="4" y="16" ry="4"
             inkscape:label="container" />
     </g>
-    <xsl:text>&#xa;</xsl:text>
     <g opacity="1"
        inkscape:label="container"
        transform="{$t}">
@@ -328,7 +297,6 @@
           <xsl:otherwise>container</xsl:otherwise>
         </xsl:choose>
       </xsl:attribute>
-      <xsl:text>&#xa;</xsl:text>
       <path
           class="base-style generic-style container-base container-path"
           style="stroke:none"
@@ -337,13 +305,11 @@
           <xsl:with-param name="w" select="$w" />
         </xsl:call-template>
       </path>
-      <xsl:text>&#xa;</xsl:text>
       <rect class="base-style generic-style container-base container-rect"
             width="{$w}" height="{$h}"
             x="4" y="16" ry="4"
             inkscape:label="container"
             tabindex="0" />
-      <xsl:text>&#xa;</xsl:text>
       <text class="layer-name-string" x="18.5" y="13.5">
         <xsl:value-of select="@path" />
       </text>
@@ -367,7 +333,7 @@
                           ')' )" />
   </xsl:template>
 
-  <xsl:template name="process_layer">
+  <xsl:template match="sv:layer">
     <xsl:param name="w" />
     <xsl:variable name="left_align">
       <xsl:call-template name="generate_layer_specific_transform" />
@@ -383,18 +349,20 @@
         <xsl:with-param name="h" select="$unitsize*(2.5 + sum(child::sv:prim/@height))" />
         <xsl:with-param name="t" select="$left_align" />
       </xsl:call-template>
-      <xsl:text>&#xa;</xsl:text>
       <g inkscape:label="right_aligned"
          class="right-aligned"
          transform="{$right_align}">
-        <xsl:apply-templates select="." mode="right_aligned" />
+        <g class="content"
+           transform="translate(-12,34)"
+           inkscape:label="isa_column">
+          <xsl:apply-templates select="sv:prim" mode="right_aligned" />
+        </g>
+        <xsl:apply-templates select="sv:custom" mode="right_aligned" />
       </g>
       <g inkscape:label="left_aligned"
          class="left-aligned"
          transform="{$left_align}">
-        <xsl:for-each select=".">
-          <xsl:apply-templates />
-        </xsl:for-each>
+        <xsl:apply-templates />
       </g>
     </g>
   </xsl:template>
@@ -489,21 +457,11 @@
         </xsl:attribute>
       </path>
       <use href="#spec-dot-{$spec}" x="12" y="28" />
-
-      <xsl:for-each select="."><xsl:apply-templates /></xsl:for-each>
+      <xsl:apply-templates />
     </g>
   </xsl:template>
 
   <xsl:template match="*" mode="right_aligned" />
-
-  <xsl:template match="sv:layer" mode="right_aligned">
-    <g class="content"
-       transform="translate(-12,34)"
-       inkscape:label="isa_column">
-      <xsl:apply-templates select="sv:prim" mode="right_aligned" />
-    </g>
-    <xsl:apply-templates select="sv:custom" mode="right_aligned" />
-  </xsl:template>
 
   <xsl:template match="sv:prim[@isa]" mode="right_aligned">
     <xsl:variable name="transform">
@@ -511,28 +469,26 @@
     </xsl:variable>
     <xsl:variable name="barDraw" select="sum(@barDraw)" />
     <xsl:variable name="barSkip" select="sum(@barSkip)" />
-    <xsl:text>&#xa;</xsl:text>
     <use href="#isa-{@isa}" transform="{$transform}" />
-    <xsl:if test="$barSkip &gt; 0">
+    <xsl:if test="$barSkip">
       <use href="#bar-{$barSkip}-path" style="stroke-opacity:0.2"
            transform="{$transform}" x="16" y="7.5" />
     </xsl:if>
-    <xsl:if test="$barDraw &gt; 0">
+    <xsl:if test="$barDraw">
       <use href="#bar-{$barDraw}-path" style="stroke-opacity:1.0"
            transform="{$transform}" x="16" y="{7.5 + $barSkip*2}" />
     </xsl:if>
   </xsl:template>
 
   <xsl:template name="tag_loop">
-    <xsl:param name="i" />
-    <xsl:param name="offset" />
+    <xsl:param name="index" select="count(preceding-sibling::sv:tag)" />
+    <xsl:param name="offset" select="0" />
     <xsl:choose>
-      <xsl:when test="$i &gt; 1">
-        <xsl:variable name="tagid" select="../sv:tag[($i)-1]/@name" />
-        <xsl:variable name="tagval" select="/sv:sv/sv:defs/sv:deftag[@id=$tagid]/@width" />
-        <xsl:variable name="total" select="$offset+$tagval" />
+      <xsl:when test="$index">
+        <xsl:variable name="tagid" select="../sv:tag[$index]/@name" />
+        <xsl:variable name="total" select="$offset + key('find_tag', $tagid)/@width" />
         <xsl:call-template name="tag_loop">
-          <xsl:with-param name="i" select="($i)-1" />
+          <xsl:with-param name="index" select="$index - 1" />
           <xsl:with-param name="offset" select="$total + 2" />
         </xsl:call-template>
       </xsl:when>
@@ -549,30 +505,32 @@
   <!-- </sv:taglist> -->
 
   <xsl:template match="sv:taglist">
-    <xsl:variable name="row_index" select="count(preceding-sibling::sv:taglist)" />
-    <xsl:for-each select="sv:tag">
-      <xsl:variable name="placeholder">
-        <xsl:if test="@empty">-placeholder</xsl:if>
-      </xsl:variable>
-      <xsl:variable name="x">
-        <xsl:call-template name="tag_loop">
-          <xsl:with-param name="i" select="position()" />
-          <xsl:with-param name="offset" select="0" />
-        </xsl:call-template>
-      </xsl:variable>
-      <xsl:variable
-          name="transform"
-          select="concat(
-                  'translate(',
-                  20 + $x,
-                  ',',
-                  34 + $row_index*$unitsize,
-                  ')'
-                  )" />
-      <use href="#tag{$placeholder}-{@name}" transform="{$transform}">
-        <xsl:call-template name="write_info" />
-      </use>
-    </xsl:for-each>
+    <xsl:apply-templates>
+      <xsl:with-param name="row_index"
+                      select="count(preceding-sibling::sv:taglist)" />
+    </xsl:apply-templates>
+  </xsl:template>
+
+  <xsl:template match="sv:tag">
+    <xsl:param name="row_index" />
+    <xsl:variable name="placeholder">
+      <xsl:if test="@empty">-placeholder</xsl:if>
+    </xsl:variable>
+    <xsl:variable name="x">
+      <xsl:call-template name="tag_loop" />
+    </xsl:variable>
+    <xsl:variable
+        name="transform"
+        select="concat(
+                'translate(',
+                20 + $x,
+                ',',
+                34 + $row_index*$unitsize,
+                ')'
+                )" />
+    <use href="#tag{$placeholder}-{@name}" transform="{$transform}">
+      <xsl:call-template name="write_info" />
+    </use>
   </xsl:template>
 
   <!-- / LAYER CONTENTS -->
@@ -626,14 +584,11 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="text()" mode="autodefs" />
-
   <xsl:template match="sv:stacks" mode="autodefs">
     <!-- WARNING: Beginning of probably slow templates. -->
     <xsl:for-each select="//sv:prim[@barDraw
                           and not(@barDraw = preceding::sv:prim/@barDraw)
                           and not(@barDraw = preceding::sv:prim/@barSkip)]">
-      <xsl:text>&#xa;</xsl:text>
       <path id="bar-{@barDraw}-path" class="content-bar">
         <xsl:call-template name="generate_content_bars">
           <xsl:with-param name="limit" select="@barDraw" />
@@ -643,7 +598,6 @@
     <xsl:for-each select="//sv:prim[@barSkip
                           and not(@barSkip = preceding::sv:prim/@barDraw)
                           and not(@barSkip = preceding::sv:prim/@barSkip)]">
-      <xsl:text>&#xa;</xsl:text>
       <path id="bar-{@barSkip}-path" class="content-bar">
         <xsl:call-template name="generate_content_bars">
           <xsl:with-param name="limit" select="@barSkip" />
@@ -651,7 +605,6 @@
       </path>
     </xsl:for-each>
     <xsl:for-each select="//sv:prim[@isa and not(@isa = preceding::sv:prim/@isa)]">
-      <xsl:text>&#xa;</xsl:text>
       <g id="isa-{@isa}">
         <rect
             class="isa-rect"
@@ -666,7 +619,6 @@
       </g>
     </xsl:for-each>
     <!-- WARNING: End of probably slow templates. -->
-    <xsl:text>&#xa;</xsl:text>
   </xsl:template>
 
   <xsl:template match="sv:defs" mode="autodefs">
@@ -945,9 +897,7 @@
           r="0.8" />
     </g>
 
-    <xsl:for-each select=".">
-      <xsl:apply-templates />
-    </xsl:for-each>
+    <xsl:apply-templates />
   </xsl:template>
 
   <!-- / DEFS -->
