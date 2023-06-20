@@ -54,7 +54,7 @@ export async function populate_page()
                     // Apply the source data to the diagram object.
                     diagramElt.setAttribute(
                         "data",
-                        `/data/${catInfo.name}/${pageInfo.name}`)
+                        `./data/${catInfo.name}/${pageInfo.name}`)
 
                     buttonStateElt.style.display = "inline"
                     assignedData = true

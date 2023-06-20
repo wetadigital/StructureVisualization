@@ -623,6 +623,7 @@
 
   <xsl:template match="sv:defs" mode="autodefs">
     <style>
+      <![CDATA[@import url('https://fonts.googleapis.com/css2?family=Ubuntu&family=Ubuntu+Condensed&family=Ubuntu+Mono:wght@400;700&display=swap');]]>
       .base-style
       {
       stroke-linejoin:round;

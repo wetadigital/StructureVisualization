@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- Copyright (c) Contributors to the StructureVisualization Project. -->
 
-<?xml-stylesheet type="text/xsl" href="/res/gen_svg-0.1.xsl"?>
+<?xml-stylesheet type="text/xsl" href="../../res/gen_svg-0.1.xsl"?>
 <sv:sv xmlns:sv="urn:example:sv" xmlns="http://www.w3.org/2000/svg">
 
   <sv:defs>

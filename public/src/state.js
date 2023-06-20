@@ -30,8 +30,8 @@ class CategoryInfo {
     }
 }
 
-export const SV_CFG = await fetch("/res/config.json").then(r=>r.json())
-export const SV_DATA = await fetch("/data/manifest.json")
+export const SV_CFG = await fetch("./res/config.json").then(r=>r.json())
+export const SV_DATA = await fetch("./data/manifest.json")
     .then(response=>response.json())
     .then(data=>{
         let categories = new Map()
