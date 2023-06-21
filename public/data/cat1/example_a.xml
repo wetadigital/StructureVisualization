@@ -19,7 +19,7 @@
 
     <sv:stack id="payload_proxy" gridX="2" gridY="4" parent="main">
       <sv:layer idSuffix="root" path="proxy.usd">
-        <sv:prim isa="scope" name="model" default="1" height="3">
+        <sv:prim isa="scope" name="model" default="1">
           <sv:taglist>
             <sv:tag name="component" />
           </sv:taglist>
@@ -29,7 +29,7 @@
 
     <sv:stack id="payload_render" gridX="2" gridY="13" parent="main">
       <sv:layer idSuffix="root" path="render.usd">
-        <sv:prim isa="scope" name="model" default="1" height="3">
+        <sv:prim isa="scope" name="model" default="1">
           <sv:taglist>
             <sv:tag name="component" />
           </sv:taglist>
@@ -39,7 +39,7 @@
 
     <sv:stack id="main">
       <sv:layer idSuffix="root" path="main.usd">
-        <sv:prim isa="xform" name="main" barDraw="1" default="1" height="4" theight="13">
+        <sv:prim isa="xform" name="main" barDraw="1" default="1" vline="13">
           <sv:taglist>
             <sv:tag name="asset-info" />
             <sv:tag name="custom-data" />
@@ -48,13 +48,13 @@
             <sv:tag name="assembly" />
           </sv:taglist>
         </sv:prim>
-        <sv:prim isa="scope" name="proxy" height="9" indent="1">
+        <sv:prim isa="scope" name="proxy" indent="1" vspan="9">
           <sv:taglist>
             <sv:tag name="component" empty="1" />
             <sv:tag name="payload" info="proxy.usd" />
           </sv:taglist>
         </sv:prim>
-        <sv:prim isa="scope" name="render" height="5" indent="1">
+        <sv:prim isa="scope" name="render" indent="1">
           <sv:taglist>
             <sv:tag name="component" empty="1" />
             <sv:tag name="payload" info="render.usd" />

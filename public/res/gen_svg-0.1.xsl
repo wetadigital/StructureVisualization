@@ -209,6 +209,66 @@
 
 
 
+  <!-- CONTENT HEIGHT CALCULATIONS -->
+  <!-- ########################## -->
+
+  <xsl:template match="sv:prim" mode="required_prim_vline">
+    <xsl:variable name="tag_and_bar_height">
+      <xsl:call-template name="get_max">
+        <xsl:with-param name="a" select="1" />
+        <xsl:with-param name="b" select="count(sv:taglist)" />
+      </xsl:call-template>
+    </xsl:variable>
+    <xsl:value-of select="$tag_and_bar_height+2" />
+  </xsl:template>
+
+  <xsl:template match="sv:prim" mode="required_prim_vspan">
+    <xsl:variable name="following_indent" select="sum(following-sibling::sv:prim[1]/@indent)" />
+    <xsl:variable name="last_prim" select="not(following-sibling::sv:prim)" />
+    <xsl:variable name="required_vline">
+      <xsl:apply-templates select="." mode="required_prim_vline" />
+    </xsl:variable>
+    <xsl:choose>
+      <xsl:when test="(sum(@indent) &lt; $following_indent) or $last_prim">
+        <xsl:value-of select="$required_vline" />
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$required_vline + 2" />
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="sv:layer" mode="contents_height">
+    <xsl:param name="index" select="count(sv:prim)" />
+    <xsl:param name="current_sum" select="0" />
+    <xsl:choose>
+      <xsl:when test="$index">
+        <xsl:variable name="h">
+          <xsl:choose>
+            <xsl:when test="sv:prim[$index][@vspan]">
+              <xsl:value-of select="sv:prim[$index]/@vspan" />
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:apply-templates select="sv:prim[$index]"
+                                   mode="required_prim_vspan" />
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:variable>
+        <xsl:apply-templates select="." mode="contents_height">
+          <xsl:with-param name="current_sum" select="$current_sum + $h" />
+          <xsl:with-param name="index" select="$index - 1" />
+        </xsl:apply-templates>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$current_sum" />
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <!-- / CONTENT HEIGHT CALCULATIONS -->
+
+
+
   <!-- STACK -->
   <!-- ##### -->
 
@@ -343,10 +403,13 @@
         <xsl:with-param name="offsetX" select="$w" />
       </xsl:call-template>
     </xsl:variable>
+    <xsl:variable name="total_vspan">
+      <xsl:apply-templates select="." mode="contents_height" />
+    </xsl:variable>
     <g id="{concat('layer_', ../@id, '_', @idSuffix)}">
       <xsl:call-template name="add_container">
         <xsl:with-param name="w" select="$w" />
-        <xsl:with-param name="h" select="$unitsize*(2.5 + sum(child::sv:prim/@height))" />
+        <xsl:with-param name="h" select="$unitsize*(2.5 + $total_vspan)" />
         <xsl:with-param name="t" select="$left_align" />
       </xsl:call-template>
       <g inkscape:label="right_aligned"
@@ -391,11 +454,14 @@
 
   <xsl:template name="generate_prim_specific_transform">
     <xsl:param name="offsetX" select="0" />
-    <xsl:variable name="precedingPrimOffset"
-                  select="sum(preceding-sibling::sv:prim/@height)" />
+    <xsl:variable name="preceding_vspan">
+      <xsl:apply-templates select=".." mode="contents_height">
+        <xsl:with-param name="index" select="count(preceding-sibling::sv:prim)" />
+      </xsl:apply-templates>
+    </xsl:variable>
     <xsl:value-of select="concat('translate(',
                           $offsetX, ',',
-                          $unitsize*$precedingPrimOffset, ')')" />
+                          $unitsize*$preceding_vspan, ')')" />
   </xsl:template>
 
   <xsl:template name="prim_transform">
@@ -432,8 +498,13 @@
       <xsl:if test="not($treat_as_default)">
         <xsl:call-template name="prim_name" />
       </xsl:if>
-      <xsl:variable name="th">
-        <xsl:value-of select="sum(@theight)" />
+      <xsl:variable name="vline">
+        <xsl:call-template name="get_max">
+          <xsl:with-param name="a" select="sum(@vline)" />
+          <xsl:with-param name="b">
+            <xsl:apply-templates select="." mode="required_prim_vline" />
+          </xsl:with-param>
+        </xsl:call-template>
       </xsl:variable>
       <path class="spec-pline">
         <xsl:attribute name="d">
@@ -442,7 +513,7 @@
                       ' M ', $layerContentX - $unitsize * 2, ',', $layerContentY,
                       ' h ', $unitsize *2 - 2,
                       ' m ', '2, 2',
-                      ' v ', $th * $unitsize - 1.5
+                      ' v ', $vline * $unitsize - 1.5
                       )" />
         </xsl:attribute>
         <xsl:attribute name="style">

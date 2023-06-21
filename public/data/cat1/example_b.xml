@@ -18,7 +18,7 @@
 
     <sv:stack id="main">
       <sv:layer idSuffix="root" path="main.usd">
-        <sv:prim isa="xform" name="main" barDraw="1" default="1" height="4" theight="8">
+        <sv:prim isa="xform" name="main" barDraw="1" default="1" vline="9">
           <sv:taglist>
             <sv:tag name="asset-info" />
             <sv:tag name="custom-data" />
@@ -27,12 +27,12 @@
             <sv:tag name="assembly" />
           </sv:taglist>
         </sv:prim>
-        <sv:prim isa="scope" name="proxy" height="4" indent="1">
+        <sv:prim isa="scope" name="proxy" indent="1">
           <sv:taglist>
             <sv:tag name="component" />
           </sv:taglist>
         </sv:prim>
-        <sv:prim isa="scope" name="render" height="4" indent="1">
+        <sv:prim isa="scope" name="render" indent="1">
           <sv:taglist>
             <sv:tag name="component" />
           </sv:taglist>
