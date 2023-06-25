@@ -711,12 +711,31 @@
       <xsl:call-template name="write_info" />
       <rect
           class="base-style prim-tag"
-          style="fill:{@color}"
           width="{@width}"
           height="6"
-          ry="1" />
+          ry="1">
+        <xsl:attribute name="style">
+          <xsl:choose>
+            <xsl:when test="@color">
+              <xsl:value-of select="concat('fill:', @color)" />
+            </xsl:when>
+            <xsl:when test="@type = 'meta'">
+              <xsl:value-of select="'fill:#500025'" />
+            </xsl:when>
+            <xsl:when test="@type = 'kind'">
+              <xsl:value-of select="'fill:#0A5040'" />
+            </xsl:when>
+            <xsl:when test="@type = 'comp'">
+              <xsl:value-of select="'fill:#952A05'" />
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:value-of select="'fill:#333333'" />
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:attribute>
+      </rect>
       <xsl:call-template name="tag_string">
-        <xsl:with-param name="value" select="@value" />
+        <xsl:with-param name="fallback" select="@id" />
       </xsl:call-template>
     </g>
 
@@ -730,7 +749,19 @@
   </xsl:template>
 
   <xsl:template name="tag_string">
-    <xsl:param name="value" />
+    <xsl:param name="fallback" />
+    <xsl:variable name="value">
+      <xsl:choose>
+        <xsl:when test="@text">
+          <xsl:value-of select="@text" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="translate($fallback,
+                                'abcdefghijklmnopqrstuvwxyz-',
+                                'ABCDEFGHIJKLMNOPQRSTUVWXYZ ')" />
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
     <text class="prim-tag-string" x="1.5" y="5">
       <xsl:value-of select="$value" />
     </text>
@@ -778,9 +809,7 @@
             height="6"
             ry="1" />
         <xsl:call-template name="tag_string">
-          <xsl:with-param name="value" select="translate(@isa,
-                                               'abcdefghijklmnopqrstuvwxyz',
-                                               'ABCDEFGHIJKLMNOPQRSTUVWXYZ')" />
+          <xsl:with-param name="fallback" select="@isa" />
         </xsl:call-template>
       </g>
     </xsl:for-each>
