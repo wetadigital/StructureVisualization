@@ -104,9 +104,9 @@
   </xsl:template>
 
   <xsl:template match="sv:taglist" mode="required_width">
-    <xsl:param name="index" select="count(sv:tag)" />
+    <xsl:param name="index" select="count(sv:tag | sv:gap)" />
     <xsl:param name="current_sum" select="0" />
-    <xsl:variable name="tagid" select="sv:tag[$index]/@name" />
+    <xsl:variable name="tagid" select="(sv:tag | sv:gap)[$index]/@name" />
     <xsl:choose>
       <xsl:when test="$index">
         <xsl:apply-templates select="." mode="required_width">
@@ -321,7 +321,7 @@
       </xsl:apply-templates>
     </xsl:variable>
     <xsl:variable name="idResolved" select="concat('stack_', $idRootLayer)" />
-    <xsl:for-each select="descendant::sv:tag[@target]">
+    <xsl:for-each select="(descendant::sv:tag | descendant::sv:gap)[@target]">
       <xsl:variable name="uid" select="generate-id()"/>
       <xsl:variable name="uidLength" select="string-length($uid)"/>
       <xsl:variable name="uidShort">
@@ -650,11 +650,11 @@
   </xsl:template>
 
   <xsl:template name="tag_loop">
-    <xsl:param name="index" select="count(preceding-sibling::sv:tag)" />
+    <xsl:param name="index" select="count(preceding-sibling::sv:tag | preceding-sibling::sv:gap)" />
     <xsl:param name="offset" select="0" />
     <xsl:choose>
       <xsl:when test="$index">
-        <xsl:variable name="tagid" select="../sv:tag[$index]/@name" />
+        <xsl:variable name="tagid" select="(../sv:tag | ../sv:gap)[$index]/@name" />
         <xsl:variable name="total" select="$offset + key('find_tag', $tagid)/@width" />
         <xsl:call-template name="tag_loop">
           <xsl:with-param name="index" select="$index - 1" />
@@ -680,11 +680,8 @@
     </xsl:apply-templates>
   </xsl:template>
 
-  <xsl:template match="sv:tag">
+  <xsl:template match="sv:tag | sv:gap">
     <xsl:param name="row_index" />
-    <xsl:variable name="placeholder">
-      <xsl:if test="@empty">-placeholder</xsl:if>
-    </xsl:variable>
     <xsl:variable name="x">
       <xsl:call-template name="tag_loop" />
     </xsl:variable>
@@ -697,7 +694,7 @@
                 34 + $row_index*$unitsize,
                 ')'
                 )" />
-    <use href="#tag{$placeholder}-{@name}" transform="{$transform}">
+    <use href="#{local-name()}-{@name}" transform="{$transform}">
       <xsl:call-template name="write_info" />
     </use>
   </xsl:template>
@@ -723,9 +720,9 @@
       </xsl:call-template>
     </g>
 
-    <g id="tag-placeholder-{@id}">
+    <g id="gap-{@id}">
       <rect
-          class="base-style prim-tag-placeholder"
+          class="base-style prim-gap"
           width="{@width}"
           height="6"
           ry="1" />
@@ -819,7 +816,7 @@
       stroke-width:0.5;
       }
 
-      .prim-tag-placeholder
+      .prim-gap
       {
       stroke:#333333;
       stroke-width:0.5;
