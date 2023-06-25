@@ -6,19 +6,18 @@
 <sv:sv xmlns:sv="urn:example:sv" xmlns="http://www.w3.org/2000/svg">
 
   <sv:defs>
-    <sv:deftag id="asset-info" value="ASSET INFO" width="29" color="#333333" />
-    <sv:deftag id="custom-data" value="CUSTOM DATA" width="35" color="#333333" />
-    <sv:deftag id="assembly" value="ASSEMBLY" width="26" color="#008080" />
-    <sv:deftag id="component" value="COMPONENT" width="32" color="#008080" />
+    <sv:deftag type="meta" id="asset-info" />
+    <sv:deftag type="meta" id="custom-data" />
+    <sv:deftag type="kind" id="assembly" />
+    <sv:deftag type="kind" id="component" />
   </sv:defs>
 
   <sv:namedview />
 
   <sv:stacks>
-
-    <sv:stack id="main">
-      <sv:layer idSuffix="root" path="main.usd">
-        <sv:prim isa="xform" name="main" barDraw="1" default="1" vline="9">
+    <sv:stack>
+      <sv:layer path="main.usd" defaultPrim="main">
+        <sv:prim path="/main" isa="xform" barDraw="1" vline="9">
           <sv:taglist>
             <sv:tag name="asset-info" />
             <sv:tag name="custom-data" />
@@ -27,12 +26,12 @@
             <sv:tag name="assembly" />
           </sv:taglist>
         </sv:prim>
-        <sv:prim isa="scope" name="proxy" indent="1">
+        <sv:prim path="/main/proxy" isa="scope">
           <sv:taglist>
             <sv:tag name="component" />
           </sv:taglist>
         </sv:prim>
-        <sv:prim isa="scope" name="render" indent="1">
+        <sv:prim path="/main/render" isa="scope">
           <sv:taglist>
             <sv:tag name="component" />
           </sv:taglist>
