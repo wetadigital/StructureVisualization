@@ -56,13 +56,6 @@ export default class UsdLayer extends SVG.G
     {
         const value_range = SV_CFG["visibility-range"][category][className]
         const value_state = SV_CFG["visibility"][category][`${state}`][className]
-        const rootLayer = content.node.dataset.overrides
-        if (className === "root-container")
-        {
-            const width = this.xforms[state].right_aligned_x
-            this.findOne("rect.container-rect").attr("width", width)
-        }
-
         const target_value = value_state ? value_range[1] : value_range[0]
         if (typeof(target_value) === "boolean")
         {
@@ -121,6 +114,9 @@ export default class UsdLayer extends SVG.G
         const right_transform = xform.compose_right_transform()
         this.attr("transform", layer_transform)
         this.get_right_aligned().attr("transform", right_transform)
+        this.findOne("g.root-container")
+        ?.findOne("rect.container-rect")
+        ?.attr("width", xform.right_aligned_x)
         this.animate_layer_contents("view", targetState)
     }
 }
