@@ -20,6 +20,9 @@
 
   <xsl:variable name="unitsize" select="8" />
   <xsl:variable name="indentFactor" select="2" />
+  <xsl:variable name="dotRadius" select="2.5" />
+  <xsl:variable name="tagMargin" select="2" />
+  <xsl:variable name="tagPadding" select="1.5" />
   <xsl:variable name="primfontW" select="5" />
   <xsl:variable name="primfontH" select="$primfontW*2" />
   <xsl:variable name="totalwidth" select="24" />
@@ -134,9 +137,9 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template name="required_string_width">
+  <xsl:template name="required_tag_width">
     <xsl:param name="value" />
-    <xsl:value-of select="string-length($value)*3 + 4" />
+    <xsl:value-of select="string-length($value)*3 + 2 + $tagPadding*2" />
   </xsl:template>
 
   <xsl:template match="sv:taglist" mode="required_width">
@@ -144,7 +147,7 @@
     <xsl:param name="current_sum" select="0" />
     <xsl:variable name="tagid" select="(sv:tag | sv:gap)[$index]/@name" />
     <xsl:variable name="width">
-      <xsl:call-template name="required_string_width">
+      <xsl:call-template name="required_tag_width">
         <xsl:with-param name="value">
           <xsl:apply-templates select="key('find_tag', $tagid)" mode="tag_string" />
         </xsl:with-param>
@@ -154,7 +157,7 @@
       <xsl:when test="$index">
         <xsl:apply-templates select="." mode="required_width">
           <xsl:with-param name="index" select="$index - 1" />
-          <xsl:with-param name="current_sum" select="$current_sum + $width + 2" />
+          <xsl:with-param name="current_sum" select="$current_sum + $width + $tagMargin" />
         </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>
@@ -578,7 +581,7 @@
   </xsl:template>
 
   <!-- Example: -->
-  <!-- <sv:prim isa="xform" name="x" barSkip="1" barDraw="1" default="1" height="4" /> -->
+  <!-- <sv:prim path="/x" isa="xform" barSkip="1" barDraw="1" vspan="4" vline="14" /> -->
 
   <xsl:template name="generate_prim_specific_transform">
     <xsl:param name="offsetX" select="0" />
@@ -650,18 +653,18 @@
           <xsl:value-of
               select="concat(
                       ' M ', $layerContentX - $indentFactor*$unitsize, ',', $layerContentY,
-                      ' h ', $unitsize*$indentFactor - 2,
-                      ' m ', '2, 2',
-                      ' v ', $vline * $unitsize - 1.5
+                      ' h ', $unitsize*$indentFactor - $dotRadius,
+                      ' m ', $dotRadius, ', ', $dotRadius,
+                      ' v ', $vline * $unitsize - ($dotRadius - .5)
                       )" />
         </xsl:attribute>
         <xsl:attribute name="style">
           <xsl:choose>
-            <xsl:when test="$spec = 'def'">
-              <xsl:value-of select="'stroke-dasharray:none'" />
+            <xsl:when test="$spec = 'over'">
+              <xsl:value-of select="'stroke-dasharray:2, 2'" />
             </xsl:when>
             <xsl:otherwise>
-              <xsl:value-of select="'stroke-dasharray:2, 2'" />
+              <xsl:value-of select="'stroke-dasharray:none'" />
             </xsl:otherwise>
           </xsl:choose>
         </xsl:attribute>
@@ -697,7 +700,7 @@
       <xsl:when test="$index">
         <xsl:variable name="tagid" select="(../sv:tag | ../sv:gap)[$index]/@name" />
         <xsl:variable name="width">
-          <xsl:call-template name="required_string_width">
+          <xsl:call-template name="required_tag_width">
             <xsl:with-param name="value">
               <xsl:apply-templates select="key('find_tag', $tagid)" mode="tag_string" />
             </xsl:with-param>
@@ -705,7 +708,7 @@
         </xsl:variable>
         <xsl:call-template name="tag_loop">
           <xsl:with-param name="index" select="$index - 1" />
-          <xsl:with-param name="offset" select="$offset + $width + 2" />
+          <xsl:with-param name="offset" select="$offset + $width + $tagMargin" />
         </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
@@ -716,7 +719,7 @@
 
   <!-- Example: -->
   <!-- <sv:taglist> -->
-  <!--   <sv:tag name="custom-data" empty="1" /> -->
+  <!--   <sv:gap name="custom-data" /> -->
   <!--   <sv:tag name="asset-info" /> -->
   <!-- </sv:taglist> -->
 
@@ -756,10 +759,10 @@
   <xsl:template name="tag_text_node">
     <xsl:param name="value" />
     <xsl:param name="width" />
-    <text class="prim-tag-string" x="1.5" y="5">
+    <text class="prim-tag-string" x="{$tagPadding}" y="5">
       <xsl:if test="$width">
         <xsl:attribute name="textLength">
-          <xsl:value-of select="$width - 3" />
+          <xsl:value-of select="$width - $tagPadding*2" />
         </xsl:attribute>
       </xsl:if>
       <xsl:value-of select="$value" />
@@ -771,7 +774,7 @@
       <xsl:apply-templates select="." mode="tag_string" />
     </xsl:variable>
     <xsl:variable name="width">
-      <xsl:call-template name="required_string_width">
+      <xsl:call-template name="required_tag_width">
         <xsl:with-param name="value" select="$tagString" />
       </xsl:call-template>
     </xsl:variable>
@@ -1013,9 +1016,9 @@
 
       .spec-dot
       {
-      stroke:#000000;
+      stroke:#CCCCCC;
       fill-opacity:1;
-      stroke-width:1;
+      stroke-width:1px;
       stroke-linecap:round;
       stroke-linejoin:round;
       stroke-dasharray:none;
@@ -1026,7 +1029,7 @@
       .spec-pline
       {
       fill:none;
-      stroke:#000000;
+      stroke:#CCCCCC;
       stroke-width:1;
       stroke-linecap:butt;
       stroke-linejoin:round;
@@ -1053,19 +1056,19 @@
         id="spec-dot-def"
         class="spec-dot"
         style="fill:#444444"
-        r="2" />
+        r="{$dotRadius}" />
 
     <circle
         id="spec-dot-class"
         class="spec-dot"
-        style="fill:#88CC99"
-        r="2" />
+        style="fill:#F27B1F"
+        r="{$dotRadius}" />
 
     <circle
         id="spec-dot-over"
         class="spec-dot"
         style="fill:none"
-        r="2" />
+        r="{$dotRadius}" />
 
     <marker
         style="overflow:visible"
