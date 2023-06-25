@@ -568,6 +568,7 @@
   </xsl:template>
 
   <xsl:template match="sv:prim">
+    <xsl:variable name="default" select="concat('/', ../@defaultPrim) = @path" />
     <xsl:variable name="name">
       <xsl:call-template name="extract_name" />
     </xsl:variable>
@@ -583,7 +584,7 @@
       </xsl:choose>
     </xsl:variable>
     <xsl:variable name="treat_as_default"
-                  select="@default and preceding::sv:layer" />
+                  select="$default and preceding::sv:layer" />
     <xsl:if test="$treat_as_default">
       <g inkscape:label="defaultprim" class="expanded-modes">
         <xsl:call-template name="prim_transform" />
