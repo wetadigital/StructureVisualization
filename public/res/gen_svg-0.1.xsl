@@ -25,6 +25,7 @@
   <xsl:variable name="totalwidth" select="24" />
   <xsl:variable name="layerContentX" select="$unitsize * 1.5" />
   <xsl:variable name="layerContentY" select="$unitsize * 3.5" />
+  <xsl:variable name="uidSizeLimit" select="6" />
 
   <!-- All template application is explicit. -->
   <xsl:template match="node()" />
@@ -282,14 +283,28 @@
   </xsl:template>
 
   <xsl:template match="sv:stack">
-    <xsl:param name="parent" />
+    <xsl:param name="originStack" />
+    <xsl:param name="originArcId" />
     <xsl:param name="gridX" select="0" />
     <xsl:param name="gridY" select="0" />
     <xsl:variable name="width">
       <xsl:apply-templates select="." mode="required_width" />
     </xsl:variable>
-    <xsl:variable name="id" select="@id" />
+    <xsl:variable name="idResolved" select="concat('stack_', @id, $originArcId)" />
     <xsl:for-each select="descendant::sv:tag[@target]">
+      <xsl:variable name="uid" select="generate-id()"/>
+      <xsl:variable name="uidLength" select="string-length($uid)"/>
+      <xsl:variable name="uidShort">
+        <xsl:choose>
+          <xsl:when test="$uidLength &gt; $uidSizeLimit">
+            <xsl:value-of select="substring($uid, ($uidLength - $uidSizeLimit) + 1)" />
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="$uid" />
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:variable>
+      <xsl:variable name="uidFlat" select="concat($originArcId, '&#xB7;', $uidShort)"/>
       <xsl:variable name="preceding_vspan">
         <xsl:apply-templates select="../../.." mode="contents_height">
           <xsl:with-param name="index" select="count(../../preceding-sibling::sv:prim)" />
@@ -298,23 +313,22 @@
       <xsl:apply-templates select="//sv:stack[@id = current()/@target]">
         <xsl:with-param name="gridX" select="$gridX + sum(../../@indent)*$indentFactor" />
         <xsl:with-param name="gridY" select="$gridY + $preceding_vspan" />
-        <xsl:with-param name="parent" select="$id" />
+        <xsl:with-param name="originArcId" select="$uidFlat" />
+        <xsl:with-param name="originStack" select="$idResolved" />
       </xsl:apply-templates>
     </xsl:for-each>
-    <g id="{concat('stack_', @id)}"
-       data-gridX="{$gridX}"
-       data-gridY="{$gridY}"
-       data-width="{$width}">
-      <xsl:if test="$parent">
+    <g id="{$idResolved}" data-gridX="{$gridX}" data-gridY="{$gridY}" data-width="{$width}">
+      <xsl:if test="$originStack">
         <xsl:attribute name="data-parent">
-          <xsl:value-of select="concat('stack_', $parent)" />
+          <xsl:value-of select="$originStack" />
         </xsl:attribute>
       </xsl:if>
       <xsl:attribute name="inkscape:groupmode">layer</xsl:attribute>
       <xsl:apply-templates>
+        <xsl:with-param name="w" select="$width" />
         <xsl:with-param name="stackX" select="$gridX" />
         <xsl:with-param name="stackY" select="$gridY" />
-        <xsl:with-param name="w" select="$width" />
+        <xsl:with-param name="originArcId" select="$originArcId" />
       </xsl:apply-templates>
     </g>
   </xsl:template>
@@ -416,6 +430,8 @@
     <xsl:param name="w" />
     <xsl:param name="stackX" />
     <xsl:param name="stackY" />
+    <xsl:param name="originArcId" />
+    <xsl:variable name="idResolved" select="concat(@idSuffix, $originArcId)" />
     <xsl:variable name="left_align">
       <xsl:call-template name="generate_layer_specific_transform">
         <xsl:with-param name="stackX" select="$stackX" />
@@ -432,7 +448,7 @@
     <xsl:variable name="total_vspan">
       <xsl:apply-templates select="." mode="contents_height" />
     </xsl:variable>
-    <g id="{concat('layer_', ../@id, '_', @idSuffix)}">
+    <g id="{concat('layer_', $idResolved)}">
       <xsl:call-template name="add_container">
         <xsl:with-param name="w" select="$w" />
         <xsl:with-param name="h" select="$unitsize*(2.5 + $total_vspan)" />
