@@ -76,6 +76,20 @@
 
   <xsl:key name="find_tag" match="/sv:sv/sv:defs/sv:deftag" use="@id"/>
 
+  <xsl:template name="extract_name">
+    <xsl:param name="path" select="@path" />
+    <xsl:choose>
+      <xsl:when test="contains($path, '/')">
+        <xsl:call-template name="extract_name">
+          <xsl:with-param name="path" select="substring-after($path, '/')" />
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$path" />
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
   <xsl:template name="get_max">
     <xsl:param name="a" />
     <xsl:param name="b" />
@@ -133,7 +147,10 @@
   </xsl:template>
 
   <xsl:template match="sv:prim" mode="required_width">
-    <xsl:variable name="prim_w" select="string-length(@name)*$primfontW" />
+    <xsl:variable name="name">
+      <xsl:call-template name="extract_name" />
+    </xsl:variable>
+    <xsl:variable name="prim_w" select="string-length($name)*$primfontW" />
     <xsl:variable name="tag_w">
       <xsl:apply-templates select="." mode="contents_width" />
     </xsl:variable>
@@ -143,7 +160,10 @@
         <xsl:with-param name="b" select="$tag_w" />
       </xsl:call-template>
     </xsl:variable>
-    <xsl:value-of select="$max_row + sum(@indent)*$indentFactor*$unitsize" />
+    <xsl:variable name="indent">
+      <xsl:apply-templates select="." mode="prim_indent" />
+    </xsl:variable>
+    <xsl:value-of select="$max_row + $indent*$indentFactor*$unitsize" />
   </xsl:template>
 
   <xsl:template match="sv:layer" mode="contents_width">
@@ -225,13 +245,18 @@
   </xsl:template>
 
   <xsl:template match="sv:prim" mode="required_prim_vspan">
-    <xsl:variable name="following_indent" select="sum(following-sibling::sv:prim[1]/@indent)" />
+    <xsl:variable name="indent">
+      <xsl:apply-templates mode="prim_indent" select="." />
+    </xsl:variable>
+    <xsl:variable name="following_indent">
+      <xsl:apply-templates mode="prim_indent" select="following-sibling::sv:prim[1]" />
+    </xsl:variable>
     <xsl:variable name="last_prim" select="not(following-sibling::sv:prim)" />
     <xsl:variable name="required_vline">
       <xsl:apply-templates select="." mode="required_prim_vline" />
     </xsl:variable>
     <xsl:choose>
-      <xsl:when test="(sum(@indent) &lt; $following_indent) or $last_prim">
+      <xsl:when test="($indent &lt; $following_indent) or $last_prim">
         <xsl:value-of select="$required_vline" />
       </xsl:when>
       <xsl:otherwise>
@@ -315,8 +340,11 @@
           <xsl:with-param name="index" select="count(../../preceding-sibling::sv:prim)" />
         </xsl:apply-templates>
       </xsl:variable>
+      <xsl:variable name="indent">
+        <xsl:apply-templates select="../.." mode="prim_indent" />
+      </xsl:variable>
       <xsl:apply-templates select="//sv:stack[sv:layer[1]/@path = current()/@target]">
-        <xsl:with-param name="gridX" select="$gridX + sum(../../@indent)*$indentFactor" />
+        <xsl:with-param name="gridX" select="$gridX + $indent*$indentFactor" />
         <xsl:with-param name="gridY" select="$gridY + $preceding_vspan" />
         <xsl:with-param name="originArcId" select="$uidFlat" />
         <xsl:with-param name="originStack" select="$idResolved" />
@@ -523,21 +551,31 @@
                           $unitsize*$preceding_vspan, ')')" />
   </xsl:template>
 
+  <xsl:template match="sv:prim" mode="prim_indent">
+    <xsl:value-of select="string-length(@path)
+                          - string-length(translate(@path, '/', '')) - 1" />
+  </xsl:template>
+
   <xsl:template name="prim_transform">
+    <xsl:variable name="indent">
+      <xsl:apply-templates select="." mode="prim_indent" />
+    </xsl:variable>
     <xsl:attribute name="transform">
       <xsl:call-template name="generate_prim_specific_transform">
-        <xsl:with-param name="offsetX" select="sum(@indent)*$indentFactor*$unitsize" />
+        <xsl:with-param name="offsetX" select="$indent*$indentFactor*$unitsize" />
       </xsl:call-template>
     </xsl:attribute>
   </xsl:template>
 
-  <xsl:template name="prim_name">
-    <text class="prim-name-string" x="18.5" y="30.75">
-      <xsl:value-of select="@name" />
-    </text>
-  </xsl:template>
-
   <xsl:template match="sv:prim">
+    <xsl:variable name="name">
+      <xsl:call-template name="extract_name" />
+    </xsl:variable>
+    <xsl:variable name="primNameText">
+      <text class="prim-name-string" x="18.5" y="30.75">
+        <xsl:value-of select="$name" />
+      </text>
+    </xsl:variable>
     <xsl:variable name="spec">
       <xsl:choose>
         <xsl:when test="@spec"><xsl:value-of select="@spec" /></xsl:when>
@@ -549,13 +587,13 @@
     <xsl:if test="$treat_as_default">
       <g inkscape:label="defaultprim" class="expanded-modes">
         <xsl:call-template name="prim_transform" />
-        <xsl:call-template name="prim_name" />
+        <xsl:copy-of select="$primNameText" />
       </g>
     </xsl:if>
-    <g class="content" inkscape:label="{concat('prim-',@name)}">
+    <g class="content" inkscape:label="{concat('prim-', $name)}">
       <xsl:call-template name="prim_transform" />
       <xsl:if test="not($treat_as_default)">
-        <xsl:call-template name="prim_name" />
+        <xsl:copy-of select="$primNameText" />
       </xsl:if>
       <xsl:variable name="vline">
         <xsl:call-template name="get_max">
