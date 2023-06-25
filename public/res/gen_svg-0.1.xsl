@@ -19,6 +19,7 @@
               media-type="image/svg" />
 
   <xsl:variable name="unitsize" select="8" />
+  <xsl:variable name="indentFactor" select="2" />
   <xsl:variable name="primfontW" select="5" />
   <xsl:variable name="primfontH" select="$primfontW*2" />
   <xsl:variable name="totalwidth" select="24" />
@@ -61,7 +62,7 @@
   <xsl:template match="sv:stacks">
     <g id="stacks"
        inkscape:groupmode="layer">
-      <xsl:apply-templates />
+      <xsl:apply-templates select="sv:stack[1]" />
     </g>
   </xsl:template>
 
@@ -141,7 +142,7 @@
         <xsl:with-param name="b" select="$tag_w" />
       </xsl:call-template>
     </xsl:variable>
-    <xsl:value-of select="$max_row + sum(@indent)*$unitsize*2" />
+    <xsl:value-of select="$max_row + sum(@indent)*$indentFactor*$unitsize" />
   </xsl:template>
 
   <xsl:template match="sv:layer" mode="contents_width">
@@ -281,20 +282,38 @@
   </xsl:template>
 
   <xsl:template match="sv:stack">
+    <xsl:param name="parent" />
+    <xsl:param name="gridX" select="0" />
+    <xsl:param name="gridY" select="0" />
     <xsl:variable name="width">
       <xsl:apply-templates select="." mode="required_width" />
     </xsl:variable>
+    <xsl:variable name="id" select="@id" />
+    <xsl:for-each select="descendant::sv:tag[@target]">
+      <xsl:variable name="preceding_vspan">
+        <xsl:apply-templates select="../../.." mode="contents_height">
+          <xsl:with-param name="index" select="count(../../preceding-sibling::sv:prim)" />
+        </xsl:apply-templates>
+      </xsl:variable>
+      <xsl:apply-templates select="//sv:stack[@id = current()/@target]">
+        <xsl:with-param name="gridX" select="$gridX + sum(../../@indent)*$indentFactor" />
+        <xsl:with-param name="gridY" select="$gridY + $preceding_vspan" />
+        <xsl:with-param name="parent" select="$id" />
+      </xsl:apply-templates>
+    </xsl:for-each>
     <g id="{concat('stack_', @id)}"
-       data-gridY="{sum(@gridY)}"
-       data-gridX="{sum(@gridX)}"
+       data-gridX="{$gridX}"
+       data-gridY="{$gridY}"
        data-width="{$width}">
-      <xsl:if test="@parent">
+      <xsl:if test="$parent">
         <xsl:attribute name="data-parent">
-          <xsl:value-of select="concat('stack_', @parent)" />
+          <xsl:value-of select="concat('stack_', $parent)" />
         </xsl:attribute>
       </xsl:if>
       <xsl:attribute name="inkscape:groupmode">layer</xsl:attribute>
       <xsl:apply-templates>
+        <xsl:with-param name="stackX" select="$gridX" />
+        <xsl:with-param name="stackY" select="$gridY" />
         <xsl:with-param name="w" select="$width" />
       </xsl:apply-templates>
     </g>
@@ -353,7 +372,7 @@
        transform="{$t}">
       <xsl:attribute name="class">
         <xsl:choose>
-          <xsl:when test="not(following::sv:layer)">root-container</xsl:when>
+          <xsl:when test="not(preceding::sv:layer)">root-container</xsl:when>
           <xsl:otherwise>container</xsl:otherwise>
         </xsl:choose>
       </xsl:attribute>
@@ -385,8 +404,8 @@
 
   <xsl:template name="generate_layer_specific_transform">
     <xsl:param name="offsetX" select="0" />
-    <xsl:variable name="stackX" select="sum(../@gridX)" />
-    <xsl:variable name="stackY" select="sum(../@gridY)" />
+    <xsl:param name="stackX" />
+    <xsl:param name="stackY" />
     <xsl:value-of select="concat( 'translate(',
                           $unitsize*$stackX + $offsetX, ',',
                           $unitsize*$stackY,
@@ -395,12 +414,19 @@
 
   <xsl:template match="sv:layer">
     <xsl:param name="w" />
+    <xsl:param name="stackX" />
+    <xsl:param name="stackY" />
     <xsl:variable name="left_align">
-      <xsl:call-template name="generate_layer_specific_transform" />
+      <xsl:call-template name="generate_layer_specific_transform">
+        <xsl:with-param name="stackX" select="$stackX" />
+        <xsl:with-param name="stackY" select="$stackY" />
+      </xsl:call-template>
     </xsl:variable>
     <xsl:variable name="right_align">
       <xsl:call-template name="generate_layer_specific_transform">
         <xsl:with-param name="offsetX" select="$w" />
+        <xsl:with-param name="stackX" select="$stackX" />
+        <xsl:with-param name="stackY" select="$stackY" />
       </xsl:call-template>
     </xsl:variable>
     <xsl:variable name="total_vspan">
@@ -467,7 +493,7 @@
   <xsl:template name="prim_transform">
     <xsl:attribute name="transform">
       <xsl:call-template name="generate_prim_specific_transform">
-        <xsl:with-param name="offsetX" select="sum(@indent)*2*$unitsize" />
+        <xsl:with-param name="offsetX" select="sum(@indent)*$indentFactor*$unitsize" />
       </xsl:call-template>
     </xsl:attribute>
   </xsl:template>
@@ -486,7 +512,7 @@
       </xsl:choose>
     </xsl:variable>
     <xsl:variable name="treat_as_default"
-                  select="@default and following::sv:layer" />
+                  select="@default and preceding::sv:layer" />
     <xsl:if test="$treat_as_default">
       <g inkscape:label="defaultprim" class="expanded-modes">
         <xsl:call-template name="prim_transform" />
@@ -510,8 +536,8 @@
         <xsl:attribute name="d">
           <xsl:value-of
               select="concat(
-                      ' M ', $layerContentX - $unitsize * 2, ',', $layerContentY,
-                      ' h ', $unitsize *2 - 2,
+                      ' M ', $layerContentX - $indentFactor*$unitsize, ',', $layerContentY,
+                      ' h ', $unitsize*$indentFactor - 2,
                       ' m ', '2, 2',
                       ' v ', $vline * $unitsize - 1.5
                       )" />
