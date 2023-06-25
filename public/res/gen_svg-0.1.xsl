@@ -30,6 +30,7 @@
   <!-- All template application is explicit. -->
   <xsl:template match="node()" />
   <xsl:template match="node()" mode="autodefs" />
+  <xsl:template match="node()" mode="tag_string" />
   <xsl:template match="node()" mode="right_aligned" />
   <xsl:template match="node()" mode="required_width" />
   <xsl:template match="node()" mode="contents_width" />
@@ -103,17 +104,57 @@
     </xsl:choose>
   </xsl:template>
 
+  <xsl:template name="make_tag_string">
+    <xsl:param name="value" />
+    <xsl:value-of select="translate($value,
+                          'abcdefghijklmnopqrstuvwxyz-',
+                          'ABCDEFGHIJKLMNOPQRSTUVWXYZ ')" />
+  </xsl:template>
+
+  <xsl:template match="sv:deftag" mode="tag_string">
+    <xsl:variable name="text">
+      <xsl:choose>
+        <xsl:when test="@text">
+          <xsl:value-of select="@text" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:call-template name="make_tag_string">
+            <xsl:with-param name="value" select="@id" />
+          </xsl:call-template>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:choose>
+      <xsl:when test="@value">
+        <xsl:value-of select="concat($text, ': &#34;', @value, '&#34;')" />
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$text" />
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template name="required_string_width">
+    <xsl:param name="value" />
+    <xsl:value-of select="string-length($value)*3 + 4" />
+  </xsl:template>
+
   <xsl:template match="sv:taglist" mode="required_width">
     <xsl:param name="index" select="count(sv:tag | sv:gap)" />
     <xsl:param name="current_sum" select="0" />
     <xsl:variable name="tagid" select="(sv:tag | sv:gap)[$index]/@name" />
+    <xsl:variable name="width">
+      <xsl:call-template name="required_string_width">
+        <xsl:with-param name="value">
+          <xsl:apply-templates select="key('find_tag', $tagid)" mode="tag_string" />
+        </xsl:with-param>
+      </xsl:call-template>
+    </xsl:variable>
     <xsl:choose>
       <xsl:when test="$index">
         <xsl:apply-templates select="." mode="required_width">
           <xsl:with-param name="index" select="$index - 1" />
-          <xsl:with-param
-              name="current_sum"
-              select="$current_sum + key('find_tag', $tagid)/@width + 2" />
+          <xsl:with-param name="current_sum" select="$current_sum + $width + 2" />
         </xsl:apply-templates>
       </xsl:when>
       <xsl:otherwise>
@@ -655,10 +696,16 @@
     <xsl:choose>
       <xsl:when test="$index">
         <xsl:variable name="tagid" select="(../sv:tag | ../sv:gap)[$index]/@name" />
-        <xsl:variable name="total" select="$offset + key('find_tag', $tagid)/@width" />
+        <xsl:variable name="width">
+          <xsl:call-template name="required_string_width">
+            <xsl:with-param name="value">
+              <xsl:apply-templates select="key('find_tag', $tagid)" mode="tag_string" />
+            </xsl:with-param>
+          </xsl:call-template>
+        </xsl:variable>
         <xsl:call-template name="tag_loop">
           <xsl:with-param name="index" select="$index - 1" />
-          <xsl:with-param name="offset" select="$total + 2" />
+          <xsl:with-param name="offset" select="$offset + $width + 2" />
         </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
@@ -706,12 +753,33 @@
   <!-- DEFS -->
   <!-- #### -->
 
+  <xsl:template name="tag_text_node">
+    <xsl:param name="value" />
+    <xsl:param name="width" />
+    <text class="prim-tag-string" x="1.5" y="5">
+      <xsl:if test="$width">
+        <xsl:attribute name="textLength">
+          <xsl:value-of select="$width - 3" />
+        </xsl:attribute>
+      </xsl:if>
+      <xsl:value-of select="$value" />
+    </text>
+  </xsl:template>
+
   <xsl:template match="sv:deftag">
+    <xsl:variable name="tagString">
+      <xsl:apply-templates select="." mode="tag_string" />
+    </xsl:variable>
+    <xsl:variable name="width">
+      <xsl:call-template name="required_string_width">
+        <xsl:with-param name="value" select="$tagString" />
+      </xsl:call-template>
+    </xsl:variable>
     <g id="tag-{@id}">
       <xsl:call-template name="write_info" />
       <rect
           class="base-style prim-tag"
-          width="{@width}"
+          width="{$width}"
           height="6"
           ry="1">
         <xsl:attribute name="style">
@@ -734,37 +802,19 @@
           </xsl:choose>
         </xsl:attribute>
       </rect>
-      <xsl:call-template name="tag_string">
-        <xsl:with-param name="fallback" select="@id" />
+      <xsl:call-template name="tag_text_node">
+        <xsl:with-param name="value" select="$tagString" />
+        <xsl:with-param name="width" select="$width" />
       </xsl:call-template>
     </g>
 
     <g id="gap-{@id}">
       <rect
           class="base-style prim-gap"
-          width="{@width}"
+          width="{$width}"
           height="6"
           ry="1" />
     </g>
-  </xsl:template>
-
-  <xsl:template name="tag_string">
-    <xsl:param name="fallback" />
-    <xsl:variable name="value">
-      <xsl:choose>
-        <xsl:when test="@text">
-          <xsl:value-of select="@text" />
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="translate($fallback,
-                                'abcdefghijklmnopqrstuvwxyz-',
-                                'ABCDEFGHIJKLMNOPQRSTUVWXYZ ')" />
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
-    <text class="prim-tag-string" x="1.5" y="5">
-      <xsl:value-of select="$value" />
-    </text>
   </xsl:template>
 
   <xsl:template name="generate_content_bars">
@@ -808,8 +858,12 @@
             width="19"
             height="6"
             ry="1" />
-        <xsl:call-template name="tag_string">
-          <xsl:with-param name="fallback" select="@isa" />
+        <xsl:call-template name="tag_text_node">
+          <xsl:with-param name="value">
+            <xsl:call-template name="make_tag_string">
+              <xsl:with-param name="value" select="@isa" />
+            </xsl:call-template>
+          </xsl:with-param>
         </xsl:call-template>
       </g>
     </xsl:for-each>
